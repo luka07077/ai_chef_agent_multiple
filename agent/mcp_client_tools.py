@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from typing import List, Tuple
 from langchain_core.tools import BaseTool
@@ -37,7 +38,7 @@ async def load_mcp_tools() -> Tuple[List[BaseTool], MultiServerMCPClient]:
     servers_config = {
         # Server A: our custom business logic (Python)
         "chef_core_service": {
-            "command": "python",
+            "command": sys.executable,   # use the exact interpreter running this app
             "args": [custom_server_path],
             "transport": "stdio",
         },

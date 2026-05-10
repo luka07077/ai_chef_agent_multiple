@@ -4,6 +4,9 @@ import asyncio
 import time
 from datetime import datetime
 
+import nest_asyncio
+nest_asyncio.apply()  # fix uvloop compatibility on Streamlit Cloud
+
 import streamlit as st
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
