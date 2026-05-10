@@ -1,11 +1,10 @@
 import os
 import sys
 import asyncio
+import queue
+import threading
 import time
 from datetime import datetime
-
-import nest_asyncio
-nest_asyncio.apply()  # fix uvloop compatibility on Streamlit Cloud
 
 import streamlit as st
 
@@ -202,21 +201,34 @@ async def _stream_agent_response(user_input: str, intent: str = "general"):
 def stream_agent_response(user_input: str, intent: str = "general"):
     """
     Sync wrapper: converts the async generator to a sync generator for st.write_stream.
-    intent is pre-computed by the UI layer before write_stream is called.
+    Runs the entire async stream in a daemon thread with its own fresh event loop so that
+    MCP stdio subprocesses and anyio contexts stay alive for the full duration (avoids
+    uvloop / nested-loop incompatibilities on Streamlit Cloud).
     """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    # Reset cached graph so MCP is always initialised inside the same event loop as the stream.
+    st.session_state.multi_agent_graph = None
+    st.session_state.mcp_client = None
 
-    try:
-        agen = _stream_agent_response(user_input, intent)
-        while True:
-            try:
-                token = loop.run_until_complete(agen.__anext__())
-                yield token
-            except StopAsyncIteration:
-                break
-    finally:
-        loop.close()
+    token_queue: queue.Queue = queue.Queue()
+
+    async def _produce():
+        try:
+            async for token in _stream_agent_response(user_input, intent):
+                token_queue.put(token)
+        except Exception as exc:
+            token_queue.put(exc)
+        finally:
+            token_queue.put(None)  # sentinel
+
+    threading.Thread(target=asyncio.run, args=(_produce(),), daemon=True).start()
+
+    while True:
+        item = token_queue.get(timeout=120)
+        if item is None:
+            break
+        if isinstance(item, Exception):
+            raise item
+        yield item
 
 
 # ==========================================

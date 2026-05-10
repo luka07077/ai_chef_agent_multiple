@@ -28,7 +28,6 @@ langchain-text-splitters>=1.1.1
 
 # Web UI
 streamlit>=1.35.0
-nest_asyncio>=1.6.0
 
 # Configuration Files
 pyyaml>=6.0
