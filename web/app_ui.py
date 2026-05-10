@@ -201,20 +201,34 @@ async def _stream_agent_response(user_input: str, intent: str = "general"):
 def stream_agent_response(user_input: str, intent: str = "general"):
     """
     Sync wrapper: converts the async generator to a sync generator for st.write_stream.
-    Runs the entire async stream in a daemon thread with its own fresh event loop so that
+    Runs the entire async pipeline in a daemon thread with its own fresh event loop so that
     MCP stdio subprocesses and anyio contexts stay alive for the full duration (avoids
     uvloop / nested-loop incompatibilities on Streamlit Cloud).
+    st.session_state is NOT accessed from the thread — graph initialisation and memory
+    ops are done entirely inside the thread's own event loop.
     """
-    # Reset cached graph so MCP is always initialised inside the same event loop as the stream.
-    st.session_state.multi_agent_graph = None
-    st.session_state.mcp_client = None
-
     token_queue: queue.Queue = queue.Queue()
+
+    # Snapshot values needed inside the thread (no session_state access from threads)
+    _session_id = SESSION_ID
+    _user_id    = USER_ID
+    _chat_history = memory_manager.load_history(_session_id)
 
     async def _produce():
         try:
-            async for token in _stream_agent_response(user_input, intent):
+            from agent.chef_agent import init_multi_agent_graph, get_multi_agent_response_stream
+            from langchain_core.messages import HumanMessage
+
+            graph, _client = await init_multi_agent_graph()
+            messages = _chat_history + [HumanMessage(content=user_input)]
+
+            full_reply = ""
+            async for token in get_multi_agent_response_stream(graph, messages, intent):
+                full_reply += token
                 token_queue.put(token)
+
+            safe_reply = apply_output_guardrails(full_reply)
+            memory_manager.add_conversation(_session_id, user_input, safe_reply)
         except Exception as exc:
             token_queue.put(exc)
         finally:
