@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import List, Tuple
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -11,12 +12,16 @@ MCP client and tool loader.
 Connects to two MCP servers at once:
 1. [chef_core_service]: our custom Python business server (fridge, orders, nutrition, weather)
 2. [local_filesystem]:  the official Node.js filesystem server (reads files from local_privacy/)
+                        Skipped automatically when npx is not available (e.g. Streamlit Cloud).
 
 Note: files in local_privacy/ are NOT indexed into the public RAG vector store.
 The agent reads them on demand via MCP's read_file / list_directory tools.
 """
 
 logger = get_logger("ai_chef.mcp_client")
+
+# Detect whether Node.js / npx is available (not present on Streamlit Cloud)
+_HAS_NPX = shutil.which("npx") is not None
 
 
 async def load_mcp_tools() -> Tuple[List[BaseTool], MultiServerMCPClient]:
@@ -36,14 +41,17 @@ async def load_mcp_tools() -> Tuple[List[BaseTool], MultiServerMCPClient]:
             "args": [custom_server_path],
             "transport": "stdio",
         },
-        # Server B: official filesystem server (Node.js)
-        # Only allows the agent to safely read files inside local_privacy/
-        "local_filesystem": {
+    }
+
+    # Server B: official Node.js filesystem server — only when npx is available
+    if _HAS_NPX:
+        servers_config["local_filesystem"] = {
             "command": "npx",
             "args": ["-y", "@modelcontextprotocol/server-filesystem", privacy_dir],
             "transport": "stdio",
-        },
-    }
+        }
+    else:
+        logger.warning("npx not found — local_filesystem MCP server disabled (cloud environment)")
 
     logger.info("Connecting to MCP servers (Python business service + filesystem service)...")
 

@@ -33,3 +33,6 @@ memory_sessions/
 Thumbs.db
 
 .claude/
+
+# Streamlit secrets (contains API keys — never commit)
+.streamlit/secrets.toml

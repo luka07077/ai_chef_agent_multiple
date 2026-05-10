@@ -13,6 +13,16 @@ try:
 except ImportError:
     pass  # python-dotenv not installed, just use system env vars
 
+# Streamlit Cloud: pull secrets into env vars so the rest of the code needs no changes
+try:
+    import streamlit as st
+    _SECRETS_KEYS = ("DASHSCOPE_API_KEY", "GEMINI_API_KEY", "SPOONACULAR_API_KEY")
+    for _k in _SECRETS_KEYS:
+        if _k in st.secrets and not os.environ.get(_k):
+            os.environ[_k] = st.secrets[_k]
+except Exception:
+    pass
+
 _CONF_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_CONF_DIR)
 
