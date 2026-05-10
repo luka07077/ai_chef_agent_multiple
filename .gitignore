@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 环境
+.env
+.env.example
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 数据文件（运行时生成，统一在 data/ 下）
+data/
+
+# LoRA文件
+lora_tuning/outputs/
+
+# 会话记忆（运行时生成）
+memory_sessions/
+
+# OS
+.DS_Store
+Thumbs.db
+
+.claude/

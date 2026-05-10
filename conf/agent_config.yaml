@@ -1,0 +1,68 @@
+# ==========================================
+# AI Chef Agent core config
+# ==========================================
+
+# LLM settings
+llm:
+#  main_model: "qwen3-max"
+  main_model: "qwen-max-latest"
+  main_temperature: 0.7
+
+  evaluator_model: "qwen-turbo"
+  evaluator_temperature: 0.1
+  vision_model: "qwen-vl-max"
+  vision_temperature: 0.1
+  vision_max_tokens: 500
+  audio_asr_model: "qwen-audio-turbo"
+  audio_tts_model: "cosyvoice-v1"           # multilingual (Chinese + English); replaces sambert-zhiwei-v1
+  audio_tts_voice: "longxiaochun"           # CosyVoice default voice (SDK default), supports Chinese & English
+  audio_sample_rate: 22050                  # CosyVoice outputs 22050 Hz (sambert was 16000)
+  embedding_model: "text-embedding-v2"
+
+# State / memory settings
+state:
+  max_history_messages: 20
+
+# RAG settings
+rag:
+  collection_name: "chef_knowledge_base"
+  chunk_size: 500
+  chunk_overlap: 50
+  retrieval_top_k: 3
+
+# MCP external services
+mcp:
+  request_timeout: 5.0
+  order_api_url: "https://httpbin.org/post"
+  weather_api_base: "https://wttr.in"
+  nutrition_api_base: "https://api.spoonacular.com"
+  nutrition_api_key: '51ab0b5b6b5340b08193483ba287782f'
+
+# Fridge settings
+fridge:
+  warning_days: 3
+  default_expire_days: 7
+
+# User (simulated)
+user:
+  default_user_id: "user_001"
+  default_session_id: "user_001_session"
+
+# Google Gemini cloud model (optional, choose one: Gemini or Qwen)
+gemini:
+  use_gemini: true                        # true = use Gemini, false = use Qwen (default)
+#  use_gemini: false                        # true = use Gemini, false = use Qwen (default)
+  main_model: "gemini-2.5-flash"           # options: gemini-2.5-flash / gemini-2.5-flash-lite
+  main_temperature: 0.7
+
+# LoRA local fine-tuned model (Ollama mode)
+lora:
+  use_lora_adapter: false                          # true = offline local model, false = cloud API (default)
+#  use_lora_adapter: true
+  ollama_model: "chef-lora"                        # model name registered in Ollama (set via ollama create)
+#  ollama_model: "qwen2.5:7b"
+  ollama_base_url: "http://localhost:11434"         # Ollama service URL (default: local)
+  adapter_path: "lora_tuning/data/lora_adapter"    # adapter weights path (not used in Ollama mode)
+  dataset_dir: "lora_tuning/data/lora_dataset"     # training data directory
+  max_new_tokens: 512
+  temperature: 0.7

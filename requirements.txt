@@ -1,0 +1,42 @@
+# ==========================================
+# Top-Tier AI Private Chef Agent Dependencies
+# ==========================================
+
+# LangChain Core
+langchain>=1.2.14
+langchain-community>=0.4.1
+langchain-core>=1.2.23
+langchain-ollama>=0.3.0
+langgraph>=0.2.0
+
+# MCP Protocol
+langchain-mcp-adapters>=0.2.2
+mcp>=1.0.0
+
+# Vector Database
+chromadb>=0.5.0
+langchain-chroma>=1.1.0
+
+# Tongyi Qianwen (DashScope)
+dashscope>=1.20.0
+
+# Google Gemini
+langchain-google-genai>=0.0.1
+
+# Text Splitting
+langchain-text-splitters>=1.1.1
+
+# Web UI
+streamlit>=1.35.0
+
+# Configuration Files
+pyyaml>=6.0
+
+# Document Parsing (PDF / DOCX)
+pypdf>=4.0.0
+unstructured>=0.10.0
+
+# Network Requests
+requests>=2.31.0
+
+# See lora_tuning/requirements_lora.txt for LoRA fine-tuning dependencies (install separately in Colab)
